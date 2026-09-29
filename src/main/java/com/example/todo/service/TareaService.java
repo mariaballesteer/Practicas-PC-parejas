@@ -1,5 +1,6 @@
 package com.example.todo.service;
 
+import com.example.todo.dto.EstadisticasResponse;
 import com.example.todo.dto.TareaRequest;
 import com.example.todo.exception.ReglaNegocioException;
 import com.example.todo.exception.TareaNoEncontradaException;
@@ -10,7 +11,9 @@ import com.example.todo.repository.TareaRepository;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import org.springframework.stereotype.Service;
 
@@ -114,6 +117,24 @@ public class TareaService {
       throw new ReglaNegocioException("No se puede eliminar una tarea que está en progreso");
     }
     repositorio.eliminarPorId(id);
+  }
+
+  public EstadisticasResponse estadisticas() {
+    Map<EstadoTarea, Long> porEstado = new EnumMap<>(EstadoTarea.class);
+    for (EstadoTarea estado : EstadoTarea.values()) {
+      porEstado.put(estado, 0L);
+    }
+    Map<Prioridad, Long> porPrioridad = new EnumMap<>(Prioridad.class);
+    for (Prioridad prioridad : Prioridad.values()) {
+      porPrioridad.put(prioridad, 0L);
+    }
+
+    for (Tarea tarea : repositorio.buscarTodas()) {
+      porEstado.merge(tarea.getEstado(), 1L, Long::sum);
+      porPrioridad.merge(tarea.getPrioridad(), 1L, Long::sum);
+    }
+
+    return new EstadisticasResponse(porEstado, porPrioridad);
   }
 
   // ---------- validaciones privadas ----------

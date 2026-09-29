@@ -1,6 +1,7 @@
 package com.example.todo.controller;
 
 import com.example.todo.dto.CambioEstadoRequest;
+import com.example.todo.dto.EstadisticasResponse;
 import com.example.todo.dto.TareaRequest;
 import com.example.todo.dto.TareaResponse;
 import com.example.todo.model.EstadoTarea;
@@ -56,6 +57,11 @@ public class TareaController {
   @GetMapping("/{id}")
   public TareaResponse obtener(@PathVariable Long id) {
     return TareaResponse.desde(servicio.obtener(id));
+  }
+
+  @GetMapping("/estadisticas")
+  public EstadisticasResponse estadisticas() {
+    return servicio.estadisticas();
   }
 
   @PutMapping("/{id}")
