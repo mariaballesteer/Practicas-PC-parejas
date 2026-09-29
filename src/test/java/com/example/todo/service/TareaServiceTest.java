@@ -149,6 +149,8 @@ class TareaServiceTest {
     assertThat(servicio.listarVencidas()).isEmpty();
   }
 
+  // ---------- buscar ----------
+
   @Test
   void buscar_encuentraCoincidenciasEnElTitulo() {
     servicio.crear(peticion("Estudiar Spring Boot", Prioridad.MEDIA, null));
