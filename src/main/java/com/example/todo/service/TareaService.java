@@ -2,6 +2,7 @@ package com.example.todo.service;
 
 import com.example.todo.dto.EstadisticasResponse;
 import com.example.todo.dto.TareaRequest;
+import com.example.todo.exception.ParametroInvalidoException;
 import com.example.todo.exception.ReglaNegocioException;
 import com.example.todo.exception.TareaNoEncontradaException;
 import com.example.todo.model.EstadoTarea;
@@ -70,6 +71,24 @@ public class TareaService {
         .filter(t -> t.getEstado() != EstadoTarea.COMPLETADA)
         .filter(t -> t.getFechaLimite() != null && t.getFechaLimite().isBefore(hoy))
         .toList();
+  }
+
+  public List<Tarea> buscar(String texto) {
+    if (texto == null || texto.isBlank()) {
+      throw new ParametroInvalidoException(
+          "El parámetro 'q' es obligatorio y no puede estar vacío");
+    }
+    String textoNormalizado = texto.trim().toLowerCase();
+    return repositorio.buscarTodas().stream()
+        .filter(
+            t ->
+                contieneTexto(t.getTitulo(), textoNormalizado)
+                    || contieneTexto(t.getDescripcion(), textoNormalizado))
+        .toList();
+  }
+
+  private boolean contieneTexto(String campo, String textoNormalizado) {
+    return campo != null && campo.toLowerCase().contains(textoNormalizado);
   }
 
   public Tarea actualizar(Long id, TareaRequest peticion) {

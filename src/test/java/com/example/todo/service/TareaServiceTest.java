@@ -7,6 +7,7 @@ import static org.assertj.core.api.Assertions.entry;
 
 import com.example.todo.dto.EstadisticasResponse;
 import com.example.todo.dto.TareaRequest;
+import com.example.todo.exception.ParametroInvalidoException;
 import com.example.todo.exception.ReglaNegocioException;
 import com.example.todo.exception.TareaNoEncontradaException;
 import com.example.todo.model.EstadoTarea;
@@ -148,6 +149,62 @@ class TareaServiceTest {
   @Test
   void listarVencidas_sinTareas_devuelveListaVacia() {
     assertThat(servicio.listarVencidas()).isEmpty();
+  }
+
+  // ---------- buscar ----------
+
+  @Test
+  void buscar_encuentraCoincidenciasEnElTitulo() {
+    servicio.crear(peticion("Estudiar Spring Boot", Prioridad.MEDIA, null));
+    servicio.crear(peticion("Comprar pan", Prioridad.BAJA, null));
+
+    List<Tarea> encontradas = servicio.buscar("spring");
+
+    assertThat(encontradas).extracting(Tarea::getTitulo).containsExactly("Estudiar Spring Boot");
+  }
+
+  @Test
+  void buscar_encuentraCoincidenciasEnLaDescripcion() {
+    Tarea tarea =
+        repositorio.guardar(
+            new Tarea(
+                "Tarea A",
+                "Repasar el capítulo de Spring",
+                Prioridad.MEDIA,
+                null,
+                HOY.atStartOfDay()));
+    repositorio.guardar(new Tarea("Tarea B", null, Prioridad.MEDIA, null, HOY.atStartOfDay()));
+
+    List<Tarea> encontradas = servicio.buscar("SPRING");
+
+    assertThat(encontradas).extracting(Tarea::getId).containsExactly(tarea.getId());
+  }
+
+  @Test
+  void buscar_sinCoincidencias_devuelveListaVacia() {
+    servicio.crear(peticion("Comprar pan", Prioridad.BAJA, null));
+
+    assertThat(servicio.buscar("inexistente")).isEmpty();
+  }
+
+  @Test
+  void buscar_tareaConDescripcionNula_noLanzaExcepcion() {
+    repositorio.guardar(
+        new Tarea("Tarea sin descripción", null, Prioridad.MEDIA, null, HOY.atStartOfDay()));
+
+    assertThatCode(() -> servicio.buscar("descripcion")).doesNotThrowAnyException();
+  }
+
+  @Test
+  void buscar_conTextoVacio_lanzaParametroInvalido() {
+    assertThatThrownBy(() -> servicio.buscar("   "))
+        .isInstanceOf(ParametroInvalidoException.class)
+        .hasMessageContaining("q");
+  }
+
+  @Test
+  void buscar_conTextoNulo_lanzaParametroInvalido() {
+    assertThatThrownBy(() -> servicio.buscar(null)).isInstanceOf(ParametroInvalidoException.class);
   }
 
   // ---------- estadisticas ----------

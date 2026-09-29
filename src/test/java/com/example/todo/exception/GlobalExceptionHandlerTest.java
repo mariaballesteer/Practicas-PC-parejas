@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.example.todo.dto.ErrorRespuesta;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 
 class GlobalExceptionHandlerTest {
 
@@ -39,5 +40,16 @@ class GlobalExceptionHandlerTest {
     assertThat(respuesta.getStatusCode().value()).isEqualTo(500);
     assertThat(respuesta.getBody()).isNotNull();
     assertThat(respuesta.getBody().mensaje()).doesNotContain("secreto");
+  }
+
+  @Test
+  void parametroFaltante_devuelve400ConElNombreDelParametro() {
+    ResponseEntity<ErrorRespuesta> respuesta =
+        manejador.manejarParametroFaltante(
+            new MissingServletRequestParameterException("q", "String"));
+
+    assertThat(respuesta.getStatusCode().value()).isEqualTo(400);
+    assertThat(respuesta.getBody()).isNotNull();
+    assertThat(respuesta.getBody().mensaje()).contains("q");
   }
 }

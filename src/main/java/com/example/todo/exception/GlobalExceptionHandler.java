@@ -11,6 +11,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -85,6 +86,20 @@ public class GlobalExceptionHandler {
   public ResponseEntity<ErrorRespuesta> manejarInesperado(Exception ex) {
     log.error("Error no controlado", ex);
     return construir(HttpStatus.INTERNAL_SERVER_ERROR, "Error interno del servidor", List.of());
+  }
+
+  @ExceptionHandler(MissingServletRequestParameterException.class)
+  public ResponseEntity<ErrorRespuesta> manejarParametroFaltante(
+      MissingServletRequestParameterException ex) {
+    return construir(
+        HttpStatus.BAD_REQUEST,
+        "Falta el parámetro obligatorio '" + ex.getParameterName() + "'",
+        List.of());
+  }
+
+  @ExceptionHandler(ParametroInvalidoException.class)
+  public ResponseEntity<ErrorRespuesta> manejarParametroInvalido(ParametroInvalidoException ex) {
+    return construir(HttpStatus.BAD_REQUEST, ex.getMessage(), List.of());
   }
 
   private ResponseEntity<ErrorRespuesta> construir(
