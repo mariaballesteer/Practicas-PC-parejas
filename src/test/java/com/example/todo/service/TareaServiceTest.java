@@ -3,7 +3,9 @@ package com.example.todo.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.entry;
 
+import com.example.todo.dto.EstadisticasResponse;
 import com.example.todo.dto.TareaRequest;
 import com.example.todo.exception.ParametroInvalidoException;
 import com.example.todo.exception.ReglaNegocioException;
@@ -203,6 +205,57 @@ class TareaServiceTest {
   @Test
   void buscar_conTextoNulo_lanzaParametroInvalido() {
     assertThatThrownBy(() -> servicio.buscar(null)).isInstanceOf(ParametroInvalidoException.class);
+  }
+  
+  // ---------- estadisticas ----------
+
+  @Test
+  void estadisticas_conRepositorioVacio_devuelveTodasLasClavesACero() {
+    EstadisticasResponse resultado = servicio.estadisticas();
+
+    assertThat(resultado.porEstado())
+        .containsExactly(
+            entry(EstadoTarea.PENDIENTE, 0L),
+            entry(EstadoTarea.EN_PROGRESO, 0L),
+            entry(EstadoTarea.COMPLETADA, 0L));
+    assertThat(resultado.porPrioridad())
+        .containsExactly(
+            entry(Prioridad.BAJA, 0L), entry(Prioridad.MEDIA, 0L), entry(Prioridad.ALTA, 0L));
+  }
+
+  @Test
+  void estadisticas_laSumaDeCadaMapaCoincideConElTotalDeTareas() {
+    Tarea a = servicio.crear(peticion("Tarea A", Prioridad.BAJA, null));
+    servicio.crear(peticion("Tarea B", Prioridad.MEDIA, null));
+    servicio.crear(peticion("Tarea C", Prioridad.ALTA, HOY.plusDays(1)));
+    servicio.cambiarEstado(a.getId(), EstadoTarea.EN_PROGRESO);
+
+    EstadisticasResponse resultado = servicio.estadisticas();
+
+    long totalPorEstado = resultado.porEstado().values().stream().mapToLong(Long::longValue).sum();
+    long totalPorPrioridad =
+        resultado.porPrioridad().values().stream().mapToLong(Long::longValue).sum();
+    assertThat(totalPorEstado).isEqualTo(3);
+    assertThat(totalPorPrioridad).isEqualTo(3);
+  }
+
+  @Test
+  void estadisticas_cuentaCorrectamentePorEstadoYPorPrioridad() {
+    Tarea a = servicio.crear(peticion("Tarea A", Prioridad.BAJA, null));
+    Tarea b = servicio.crear(peticion("Tarea B", Prioridad.BAJA, null));
+    servicio.crear(peticion("Tarea C", Prioridad.ALTA, HOY.plusDays(1)));
+    servicio.cambiarEstado(a.getId(), EstadoTarea.EN_PROGRESO);
+    servicio.cambiarEstado(b.getId(), EstadoTarea.EN_PROGRESO);
+    servicio.cambiarEstado(b.getId(), EstadoTarea.COMPLETADA);
+
+    EstadisticasResponse resultado = servicio.estadisticas();
+
+    assertThat(resultado.porEstado().get(EstadoTarea.PENDIENTE)).isEqualTo(1L);
+    assertThat(resultado.porEstado().get(EstadoTarea.EN_PROGRESO)).isEqualTo(1L);
+    assertThat(resultado.porEstado().get(EstadoTarea.COMPLETADA)).isEqualTo(1L);
+    assertThat(resultado.porPrioridad().get(Prioridad.BAJA)).isEqualTo(2L);
+    assertThat(resultado.porPrioridad().get(Prioridad.ALTA)).isEqualTo(1L);
+    assertThat(resultado.porPrioridad().get(Prioridad.MEDIA)).isEqualTo(0L);
   }
 
   // ---------- cambiarEstado ----------
