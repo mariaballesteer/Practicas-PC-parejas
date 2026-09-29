@@ -206,7 +206,7 @@ class TareaServiceTest {
   void buscar_conTextoNulo_lanzaParametroInvalido() {
     assertThatThrownBy(() -> servicio.buscar(null)).isInstanceOf(ParametroInvalidoException.class);
   }
-  
+
   // ---------- estadisticas ----------
 
   @Test
