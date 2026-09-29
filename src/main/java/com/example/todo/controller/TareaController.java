@@ -53,6 +53,11 @@ public class TareaController {
     return servicio.listarVencidas().stream().map(TareaResponse::desde).toList();
   }
 
+  @GetMapping("/buscar")
+  public List<TareaResponse> buscar(@RequestParam String q) {
+    return servicio.buscar(q).stream().map(TareaResponse::desde).toList();
+  }
+
   @GetMapping("/{id}")
   public TareaResponse obtener(@PathVariable Long id) {
     return TareaResponse.desde(servicio.obtener(id));
