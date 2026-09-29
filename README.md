@@ -17,7 +17,7 @@ Persistencia en memoria (los datos se pierden al parar la aplicación).
     mvn clean package
     java -jar target/todo-api.jar
 
-El `git config` activa el hook de pre-commit, que necesita Maven para formatear el código antes de cada commit. La API queda escuchando en http://localhost:8080.
+El `git config` activa el hook de pre-commit, que necesita Maven para formatear el código antes de cada commit. La API queda escuchando en http://localhost:8082.
 
 ## Arquitectura
 
