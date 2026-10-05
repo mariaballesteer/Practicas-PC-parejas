@@ -6,12 +6,14 @@ import com.example.todo.exception.ParametroInvalidoException;
 import com.example.todo.exception.ReglaNegocioException;
 import com.example.todo.exception.TareaNoEncontradaException;
 import com.example.todo.model.EstadoTarea;
+import com.example.todo.model.OrdenTareas;
 import com.example.todo.model.Prioridad;
 import com.example.todo.model.Tarea;
 import com.example.todo.repository.TareaRepository;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -58,11 +60,40 @@ public class TareaService {
     return repositorio.buscarPorId(id).orElseThrow(() -> new TareaNoEncontradaException(id));
   }
 
-  public List<Tarea> listar(EstadoTarea estado, Prioridad prioridad) {
-    return repositorio.buscarTodas().stream()
-        .filter(t -> estado == null || t.getEstado() == estado)
-        .filter(t -> prioridad == null || t.getPrioridad() == prioridad)
-        .toList();
+  public List<Tarea> listar(
+      EstadoTarea estado,
+      Prioridad prioridad,
+      LocalDate fechaDesde,
+      LocalDate fechaHasta,
+      OrdenTareas orden) {
+    if (fechaDesde != null && fechaHasta != null && fechaDesde.isAfter(fechaHasta)) {
+      throw new ReglaNegocioException("La fechaDesde no puede ser posterior a fechaHasta");
+    }
+
+    var tareas =
+        repositorio.buscarTodas().stream()
+            .filter(t -> estado == null || t.getEstado() == estado)
+            .filter(t -> prioridad == null || t.getPrioridad() == prioridad)
+            .filter(
+                t ->
+                    (fechaDesde == null && fechaHasta == null)
+                        || (t.getFechaLimite() != null
+                            && (fechaDesde == null || !t.getFechaLimite().isBefore(fechaDesde))
+                            && (fechaHasta == null || !t.getFechaLimite().isAfter(fechaHasta))))
+            .toList();
+
+    if (orden == null) {
+      return tareas;
+    }
+
+    Comparator<Tarea> comparador =
+        switch (orden) {
+          case FECHA_LIMITE ->
+              Comparator.comparing(
+                  Tarea::getFechaLimite, Comparator.nullsLast(Comparator.naturalOrder()));
+          case PRIORIDAD -> Comparator.comparing(Tarea::getPrioridad, Comparator.reverseOrder());
+        };
+    return tareas.stream().sorted(comparador).toList();
   }
 
   public List<Tarea> listarVencidas() {

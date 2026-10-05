@@ -11,6 +11,7 @@ import com.example.todo.exception.ParametroInvalidoException;
 import com.example.todo.exception.ReglaNegocioException;
 import com.example.todo.exception.TareaNoEncontradaException;
 import com.example.todo.model.EstadoTarea;
+import com.example.todo.model.OrdenTareas;
 import com.example.todo.model.Prioridad;
 import com.example.todo.model.Tarea;
 import com.example.todo.repository.TareaRepositoryEnMemoria;
@@ -119,13 +120,93 @@ class TareaServiceTest {
     servicio.crear(peticion("Tarea C", Prioridad.BAJA, null));
     servicio.cambiarEstado(a.getId(), EstadoTarea.EN_PROGRESO);
 
-    List<Tarea> todas = servicio.listar(null, null);
-    List<Tarea> bajasPendientes = servicio.listar(EstadoTarea.PENDIENTE, Prioridad.BAJA);
-    List<Tarea> enProgreso = servicio.listar(EstadoTarea.EN_PROGRESO, null);
+    List<Tarea> todas = servicio.listar(null, null, null, null, null);
+    List<Tarea> bajasPendientes =
+        servicio.listar(EstadoTarea.PENDIENTE, Prioridad.BAJA, null, null, null);
+    List<Tarea> enProgreso = servicio.listar(EstadoTarea.EN_PROGRESO, null, null, null, null);
 
     assertThat(todas).hasSize(3);
     assertThat(bajasPendientes).extracting(Tarea::getTitulo).containsExactly("Tarea C");
     assertThat(enProgreso).extracting(Tarea::getTitulo).containsExactly("Tarea A");
+  }
+
+  @Test
+  void listar_filtraPorRangoIncluyendoLimitesYExcluyeTareasSinFecha() {
+    repositorio.guardar(
+        new Tarea("Antes", null, Prioridad.MEDIA, HOY.minusDays(1), HOY.atStartOfDay()));
+    repositorio.guardar(new Tarea("Desde", null, Prioridad.BAJA, HOY, HOY.atStartOfDay()));
+    repositorio.guardar(
+        new Tarea("Hasta", null, Prioridad.ALTA, HOY.plusDays(2), HOY.atStartOfDay()));
+    repositorio.guardar(
+        new Tarea("Después", null, Prioridad.MEDIA, HOY.plusDays(3), HOY.atStartOfDay()));
+    repositorio.guardar(new Tarea("Sin fecha", null, Prioridad.BAJA, null, HOY.atStartOfDay()));
+
+    List<Tarea> resultado = servicio.listar(null, null, HOY, HOY.plusDays(2), null);
+    List<Tarea> desde = servicio.listar(null, null, HOY, null, null);
+    List<Tarea> hasta = servicio.listar(null, null, null, HOY, null);
+
+    assertThat(resultado).extracting(Tarea::getTitulo).containsExactly("Desde", "Hasta");
+    assertThat(desde).extracting(Tarea::getTitulo).containsExactly("Desde", "Hasta", "Después");
+    assertThat(hasta).extracting(Tarea::getTitulo).containsExactly("Antes", "Desde");
+  }
+
+  @Test
+  void listar_conFechaDesdePosteriorAFechaHasta_lanzaReglaNegocio() {
+    assertThatThrownBy(() -> servicio.listar(null, null, HOY.plusDays(1), HOY, null))
+        .isInstanceOf(ReglaNegocioException.class)
+        .hasMessageContaining("fechaDesde");
+  }
+
+  @Test
+  void listar_ordenPorFechaLimiteAscendenteYDejaSinFechaAlFinalConEmpatesEstables() {
+    repositorio.guardar(
+        new Tarea("Fecha lejana", null, Prioridad.MEDIA, HOY.plusDays(3), HOY.atStartOfDay()));
+    repositorio.guardar(
+        new Tarea("Primera empatada", null, Prioridad.BAJA, HOY.plusDays(1), HOY.atStartOfDay()));
+    repositorio.guardar(
+        new Tarea("Segunda empatada", null, Prioridad.ALTA, HOY.plusDays(1), HOY.atStartOfDay()));
+    repositorio.guardar(new Tarea("Sin fecha", null, Prioridad.MEDIA, null, HOY.atStartOfDay()));
+
+    List<Tarea> resultado = servicio.listar(null, null, null, null, OrdenTareas.FECHA_LIMITE);
+
+    assertThat(resultado)
+        .extracting(Tarea::getTitulo)
+        .containsExactly("Primera empatada", "Segunda empatada", "Fecha lejana", "Sin fecha");
+  }
+
+  @Test
+  void listar_ordenPorPrioridadDeAltaABajaManteniendoEmpatesPorId() {
+    repositorio.guardar(
+        new Tarea("Primera media", null, Prioridad.MEDIA, null, HOY.atStartOfDay()));
+    repositorio.guardar(new Tarea("Baja", null, Prioridad.BAJA, null, HOY.atStartOfDay()));
+    repositorio.guardar(new Tarea("Alta", null, Prioridad.ALTA, HOY, HOY.atStartOfDay()));
+    repositorio.guardar(
+        new Tarea("Segunda media", null, Prioridad.MEDIA, null, HOY.atStartOfDay()));
+
+    List<Tarea> resultado = servicio.listar(null, null, null, null, OrdenTareas.PRIORIDAD);
+
+    assertThat(resultado)
+        .extracting(Tarea::getTitulo)
+        .containsExactly("Alta", "Primera media", "Segunda media", "Baja");
+  }
+
+  @Test
+  void listar_combinaRangoConFiltrosExistentesDeEstadoYPrioridad() {
+    Tarea coincidente =
+        repositorio.guardar(
+            new Tarea("Coincidente", null, Prioridad.ALTA, HOY, HOY.atStartOfDay()));
+    coincidente.setEstado(EstadoTarea.EN_PROGRESO);
+    repositorio.guardar(
+        new Tarea("Otra prioridad", null, Prioridad.MEDIA, HOY, HOY.atStartOfDay()));
+    Tarea otroEstado =
+        repositorio.guardar(
+            new Tarea("Otro estado", null, Prioridad.ALTA, HOY, HOY.atStartOfDay()));
+    otroEstado.setEstado(EstadoTarea.COMPLETADA);
+
+    List<Tarea> resultado =
+        servicio.listar(EstadoTarea.EN_PROGRESO, Prioridad.ALTA, HOY, HOY, null);
+
+    assertThat(resultado).containsExactly(coincidente);
   }
 
   @Test

@@ -44,13 +44,13 @@ java -jar target/todo-api.jar # arranca en http://localhost:8080
 | Método | Ruta                       | Descripción                              | Respuesta |
 |--------|----------------------------|------------------------------------------|-----------|
 | POST   | `/api/tareas`              | Crear tarea                              | 201       |
-| GET    | `/api/tareas`              | Listar (`?estado=` `?prioridad=`)        | 200       |
+| GET    | `/api/tareas`              | Listar con filtros opcionales: `estado`, `prioridad`, `fechaDesde`, `fechaHasta`, `orden` | 200 |
 | GET    | `/api/tareas/{id}`         | Obtener una tarea                        | 200 / 404 |
 | PUT    | `/api/tareas/{id}`         | Actualizar datos                         | 200 / 404 |
 | PATCH  | `/api/tareas/{id}/estado`  | Cambiar estado                           | 200 / 404 |
 | DELETE | `/api/tareas/{id}`         | Eliminar                                 | 204 / 404 |
 
-Valores: `prioridad` = `BAJA | MEDIA | ALTA`; `estado` = `PENDIENTE | EN_PROGRESO | COMPLETADA`.
+`fechaDesde` y `fechaHasta` usan el formato `AAAA-MM-DD` y delimitan un rango inclusivo. Valores: `prioridad` = `BAJA | MEDIA | ALTA`; `estado` = `PENDIENTE | EN_PROGRESO | COMPLETADA`; `orden` = `FECHA_LIMITE | PRIORIDAD`.
 
 ## Códigos de error
 

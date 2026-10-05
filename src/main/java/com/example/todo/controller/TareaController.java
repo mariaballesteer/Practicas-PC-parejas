@@ -5,12 +5,15 @@ import com.example.todo.dto.EstadisticasResponse;
 import com.example.todo.dto.TareaRequest;
 import com.example.todo.dto.TareaResponse;
 import com.example.todo.model.EstadoTarea;
+import com.example.todo.model.OrdenTareas;
 import com.example.todo.model.Prioridad;
 import com.example.todo.model.Tarea;
 import com.example.todo.service.TareaService;
 import jakarta.validation.Valid;
 import java.net.URI;
+import java.time.LocalDate;
 import java.util.List;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -45,8 +48,15 @@ public class TareaController {
   @GetMapping
   public List<TareaResponse> listar(
       @RequestParam(required = false) EstadoTarea estado,
-      @RequestParam(required = false) Prioridad prioridad) {
-    return servicio.listar(estado, prioridad).stream().map(TareaResponse::desde).toList();
+      @RequestParam(required = false) Prioridad prioridad,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+          LocalDate fechaDesde,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+          LocalDate fechaHasta,
+      @RequestParam(required = false) OrdenTareas orden) {
+    return servicio.listar(estado, prioridad, fechaDesde, fechaHasta, orden).stream()
+        .map(TareaResponse::desde)
+        .toList();
   }
 
   @GetMapping("/vencidas")
