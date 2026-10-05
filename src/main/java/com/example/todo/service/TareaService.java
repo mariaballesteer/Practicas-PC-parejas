@@ -20,6 +20,8 @@ import java.util.Map;
 import java.util.Objects;
 import org.springframework.stereotype.Service;
 
+// Linea cambiada para parte C del Boletin 3
+
 /**
  * Reglas de negocio: 1. La fecha límite no puede ser anterior a hoy. 2. Una tarea de prioridad ALTA
  * debe tener fecha límite. 3. No puede haber dos tareas activas (no completadas) con el mismo

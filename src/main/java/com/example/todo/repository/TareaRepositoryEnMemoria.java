@@ -8,10 +8,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicLong;
-import org.springframework.stereotype.Repository;
 
-/** Persistencia en memoria: los datos se pierden al parar la aplicación. */
-@Repository
+/** Persistencia en memoria (ya no es un bean): se usa solo como doble en los tests. */
 public class TareaRepositoryEnMemoria implements TareaRepository {
 
   // ConcurrentSkipListMap mantiene las tareas ordenadas por id
