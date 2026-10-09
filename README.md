@@ -97,12 +97,27 @@ Una vez dentro del Dev Container, para arrancar la base de datos y la API puedes
 |--------|----------------------------|------------------------------------------|-----------|
 | POST   | `/api/tareas`              | Crear tarea                              | 201       |
 | GET    | `/api/tareas`              | Listar con filtros opcionales: `estado`, `prioridad`, `fechaDesde`, `fechaHasta`, `orden` | 200 |
+| GET    | `/api/tareas/vencidas`     | Listar las tareas vencidas (no completadas y con fecha límite anterior a hoy) | 200 |
+| GET    | `/api/tareas/buscar?q=`    | Buscar por texto en el título o la descripción (sin distinguir mayúsculas) | 200 / 400 |
+| GET    | `/api/tareas/estadisticas` | Número de tareas por estado y por prioridad, y número de tareas vencidas | 200 |
 | GET    | `/api/tareas/{id}`         | Obtener una tarea                        | 200 / 404 |
 | PUT    | `/api/tareas/{id}`         | Actualizar datos                         | 200 / 404 |
 | PATCH  | `/api/tareas/{id}/estado`  | Cambiar estado                           | 200 / 404 |
 | DELETE | `/api/tareas/{id}`         | Eliminar                                 | 204 / 404 |
 
 `fechaDesde` y `fechaHasta` usan el formato `AAAA-MM-DD` y delimitan un rango inclusivo. Valores: `prioridad` = `BAJA | MEDIA | ALTA`; `estado` = `PENDIENTE | EN_PROGRESO | COMPLETADA`; `orden` = `FECHA_LIMITE | PRIORIDAD`.
+
+En `/api/tareas/buscar`, el parámetro `q` es obligatorio y no puede estar vacío.
+
+Ejemplo de respuesta de `/api/tareas/estadisticas`:
+
+```json
+{
+  "porEstado": {"PENDIENTE": 2, "EN_PROGRESO": 1, "COMPLETADA": 3},
+  "porPrioridad": {"BAJA": 1, "MEDIA": 3, "ALTA": 2},
+  "vencidas": 1
+}
+```
 
 ## Códigos de error
 
@@ -133,6 +148,11 @@ curl -i -X POST localhost:8080/api/tareas -H "Content-Type: application/json" \
 # Listar
 curl localhost:8080/api/tareas
 curl "localhost:8080/api/tareas?estado=PENDIENTE&prioridad=ALTA"
+
+# Vencidas, búsqueda por texto y estadísticas
+curl localhost:8080/api/tareas/vencidas
+curl "localhost:8080/api/tareas/buscar?q=spring"
+curl localhost:8080/api/tareas/estadisticas
 
 # Obtener (200) y obtener inexistente (404)
 curl localhost:8080/api/tareas/1
