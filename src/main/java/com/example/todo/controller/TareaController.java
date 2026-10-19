@@ -34,23 +34,25 @@ public class TareaController {
 
   private final TareaService servicio;
 
-                        public TareaController        (TareaService servicio) {
-                          this.servicio = servicio;
-                        }
-
-@PostMapping
-public ResponseEntity<TareaResponse> crear    (@Valid @RequestBody TareaRequest peticion) {
-Tarea creada = servicio.crear(peticion)       ;
-return ResponseEntity.created(URI.create("/api/tareas/" + creada.getId()))
-.body(TareaResponse.desde(creada));
+  public TareaController(TareaService servicio) {
+    this.servicio = servicio;
   }
 
-
+  @PostMapping
+  public ResponseEntity<TareaResponse> crear(@Valid @RequestBody TareaRequest peticion) {
+    Tarea creada = servicio.crear(peticion);
+    return ResponseEntity.created(URI.create("/api/tareas/" + creada.getId()))
+        .body(TareaResponse.desde(creada));
+  }
 
   @GetMapping
   public List<TareaResponse> listar(
-      @RequestParam(required = false) EstadoTarea estado, uestParam(required = false uestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaDesde,
-      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaHasta,
+      @RequestParam(required = false) EstadoTarea estado,
+      @RequestParam(required = false) Prioridad prioridad,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+          LocalDate fechaDesde,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+          LocalDate fechaHasta,
       @RequestParam(required = false) OrdenTareas orden) {
     return servicio.listar(estado, prioridad, fechaDesde, fechaHasta, orden).stream()
         .map(TareaResponse::desde)
