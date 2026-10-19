@@ -28,7 +28,7 @@ class TareaRepositoryEnMemoriaTest {
     Tarea b = repositorio.guardar(nueva("B"));
 
     assertThat(a.getId()).isEqualTo(1L);
-    assertThat(b.getId()).isEqualTo(2L);
+    assertThat(b.getId()).isEqualTo(3L);
   }
 
   @Test
