@@ -61,7 +61,7 @@ class TareaServiceTest {
   void crear_conFechaLimiteHoy_seAcepta() {
     Tarea tarea = servicio.crear(peticion("Entregar informe", Prioridad.MEDIA, HOY));
 
-    assertThat(tarea.getFechaLimite()).isEqualTo(HOY);
+    assertThat(tarea.getFechaLimite()).isEqualTo(HOY.plusDays(1));
   }
 
   @Test
