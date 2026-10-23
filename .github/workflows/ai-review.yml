@@ -1,0 +1,65 @@
+name: Revisión IA
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: ai-review-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read        # leer el código y el diff
+  pull-requests: write  # publicar el comentario en el PR
+
+jobs:
+  resumen-ia:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # historial completo para poder hacer el diff con la base
+
+      - name: Obtener diff del PR
+        run: |
+          git diff origin/${{ github.base_ref }}...HEAD > diff.txt
+          # recortar para no exceder el contexto del modelo
+          head -c 60000 diff.txt > diff_recortado.txt
+
+      - name: Pedir resumen a Ollama Cloud
+        id: ia
+        env:
+          OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
+          MODELO: gpt-oss:120b
+        run: |
+          set +e
+          PROMPT="Eres un revisor de código. Resume en español, en lenguaje natural y con viñetas, qué cambia este Pull Request, y señala posibles problemas o riesgos. Diff:"
+          jq -n --arg model "$MODELO" --arg p "$PROMPT" --rawfile diff diff_recortado.txt \
+            '{model: $model, stream: false,
+              messages: [{role: "user", content: ($p + "\n\n" + $diff)}]}' > payload.json
+
+          HTTP_CODE=$(curl -sS -o respuesta.json -w "%{http_code}" \
+            https://ollama.com/api/chat \
+            -H "Authorization: Bearer $OLLAMA_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d @payload.json)
+
+          CONTENIDO=$(jq -r '.message.content // empty' respuesta.json 2>/dev/null)
+
+          if [ "$HTTP_CODE" != "200" ] || [ -z "$CONTENIDO" ]; then
+            echo "Fallo IA: HTTP $HTTP_CODE"; cat respuesta.json || true
+            echo "La IA ha fallado" > comentario.md
+          else
+            { echo "## 🤖 Resumen automático del PR ($MODELO)"; echo; echo "$CONTENIDO"; } > comentario.md
+          fi
+
+      - name: Comentario de respaldo si algo falló antes
+        if: failure()
+        run: echo "La IA ha fallado" > comentario.md
+
+      - name: Publicar comentario en el PR
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh pr comment ${{ github.event.pull_request.number }} --body-file comentario.md

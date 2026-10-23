@@ -1,5 +1,7 @@
 # todo-api
 
+[![CI](https://github.com/mariaballesteer/Practicas-PC-parejas/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/mariaballesteer/Practicas-PC-parejas/actions/workflows/ci.yml)
+
 API REST de gestión de tareas con **Spring Boot 3.5**, **Java 21** y **Maven**.
 Persistencia en **PostgreSQL** mediante Spring Data JPA (Hibernate).
 
