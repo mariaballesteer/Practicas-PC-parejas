@@ -2,6 +2,16 @@
 
 Gracias por querer colaborar. Esta guía explica cómo poner en marcha el proyecto y cómo se trabaja en él.
 
+## Equipo
+
+Estas personas son colaboradoras del repositorio y propietarias del código (`.github/CODEOWNERS`), así que pueden revisar y aprobar Pull Requests:
+
+- Maria Ballester (@mariaballesteer)
+- Lucía Olmos Martínez (@luciaolmosmartinez)
+- Nieves Turpín (@nievestg73)
+
+Para añadir a alguien más: el propietario del repositorio le invita como colaborador en **Settings → Collaborators** con permiso de escritura, y se añade su usuario a `.github/CODEOWNERS` y a esta lista mediante un Pull Request.
+
 ## Poner en marcha el entorno
 
 Necesitas Git, JDK 21 y Maven 3.9 o superior.
