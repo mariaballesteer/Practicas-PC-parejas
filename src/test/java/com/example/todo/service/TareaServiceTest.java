@@ -302,6 +302,7 @@ class TareaServiceTest {
     assertThat(resultado.porPrioridad())
         .containsExactly(
             entry(Prioridad.BAJA, 0L), entry(Prioridad.MEDIA, 0L), entry(Prioridad.ALTA, 0L));
+    assertThat(resultado.vencidas()).isZero();
   }
 
   @Test
@@ -337,6 +338,31 @@ class TareaServiceTest {
     assertThat(resultado.porPrioridad().get(Prioridad.BAJA)).isEqualTo(2L);
     assertThat(resultado.porPrioridad().get(Prioridad.ALTA)).isEqualTo(1L);
     assertThat(resultado.porPrioridad().get(Prioridad.MEDIA)).isEqualTo(0L);
+  }
+
+  @Test
+  void estadisticas_cuentaSoloLasVencidasNoCompletadas() {
+    LocalDateTime creada = HOY.minusDays(30).atStartOfDay();
+    repositorio.guardar(
+        new Tarea("Vencida pendiente", null, Prioridad.MEDIA, HOY.minusDays(1), creada));
+    repositorio.guardar(
+        new Tarea("Vencida antigua", null, Prioridad.BAJA, HOY.minusDays(10), creada));
+    Tarea vencidaCompletada =
+        new Tarea("Vencida completada", null, Prioridad.MEDIA, HOY.minusDays(2), creada);
+    vencidaCompletada.setEstado(EstadoTarea.COMPLETADA);
+    repositorio.guardar(vencidaCompletada);
+
+    assertThat(servicio.estadisticas().vencidas()).isEqualTo(2);
+  }
+
+  @Test
+  void estadisticas_noCuentaComoVencidasLasQueVencenHoyOMasTardeNiLasSinFecha() {
+    LocalDateTime creada = HOY.minusDays(30).atStartOfDay();
+    repositorio.guardar(new Tarea("Vence hoy", null, Prioridad.MEDIA, HOY, creada));
+    repositorio.guardar(new Tarea("Vence mañana", null, Prioridad.MEDIA, HOY.plusDays(1), creada));
+    repositorio.guardar(new Tarea("Sin fecha", null, Prioridad.BAJA, null, creada));
+
+    assertThat(servicio.estadisticas().vencidas()).isZero();
   }
 
   // ---------- cambiarEstado ----------
