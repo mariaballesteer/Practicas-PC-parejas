@@ -186,7 +186,7 @@ public class TareaService {
       porPrioridad.merge(tarea.getPrioridad(), 1L, Long::sum);
     }
 
-    return new EstadisticasResponse(porEstado, porPrioridad);
+    return new EstadisticasResponse(porEstado, porPrioridad, listarVencidas().size());
   }
 
   // ---------- validaciones privadas ----------
