@@ -31,7 +31,7 @@ jobs:
         id: ia
         env:
           OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
-          MODELO: noexiste
+          MODELO: gpt-oss:120b
         run: |
           set +e
           PROMPT="Eres un revisor de código. Resume en español, en lenguaje natural y con viñetas, qué cambia este Pull Request, y señala posibles problemas o riesgos. Diff:"
